@@ -1,0 +1,410 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Nouveau rendez-vous{% endblock %}
+
+{# ── Styles spécifiques à cette page ── #}
+{% block extra_styles %}
+
+  /* ── SECTION TITRE ── */
+  .page-title {
+    padding: 1.25rem 1.75rem 0;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── ZONE RECHERCHE ── */
+  .search-section {
+    padding: 1.25rem 1.75rem 1.5rem;
+  }
+  .search-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  .search-input {
+    flex: 1;
+    height: 42px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    padding: 0 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.18s;
+  }
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,79,232,0.1); }
+
+  /* ── TABLEAU RÉSULTATS ── */
+  .results-section {
+    border-top: 1.5px solid var(--border);
+    animation: fadeSlide 0.22s ease;
+  }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .results-header {
+    padding: 0.6rem 1.75rem;
+    background: var(--surface2);
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+  .results-header strong { color: var(--text-mid); font-weight: 600; }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1.5px solid var(--border);
+  }
+  thead th {
+    padding: 9px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    text-align: left;
+  }
+  tbody tr {
+    background: var(--white);
+    border-bottom: 1px solid #EAEAF5;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--accent-lt); }
+  tbody td { padding: 12px 16px; font-size: 14px; color: var(--text-mid); }
+  tbody td:first-child { font-weight: 500; color: var(--text); }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .badge-m { background: #E3EEFF; color: #1A5CB0; }
+  .badge-f { background: #FFE6F3; color: #B01A6E; }
+
+  .stade-bubble {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent-lt);
+    color: var(--accent);
+  }
+  .stade-none { color: var(--text-muted); }
+
+  /* ── ÉTAT VIDE ── */
+  .empty-state {
+    padding: 2.5rem;
+    text-align: center;
+    border-top: 1.5px solid var(--border);
+  }
+  .empty-state p { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+  .empty-state strong { display: block; font-size: 15px; color: var(--text-mid); }
+
+  /* ── MODAL OVERLAY ── */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20,20,50,0.45);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    animation: fadeOverlay 0.2s ease;
+  }
+  .modal-overlay.open { display: flex; }
+  @keyframes fadeOverlay { from { opacity:0; } to { opacity:1; } }
+
+  .modal {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    width: 100%;
+    max-width: 420px;
+    margin: 1rem;
+    animation: modalIn 0.22s cubic-bezier(.34,1.56,.64,1);
+  }
+  @keyframes modalIn {
+    from { opacity:0; transform:scale(0.93) translateY(16px); }
+    to   { opacity:1; transform:scale(1)    translateY(0); }
+  }
+  .modal-header {
+    padding: 1rem 1.25rem;
+    background: var(--surface2);
+    border-bottom: 1.5px solid var(--border);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-header h2 { font-size: 15px; font-weight: 600; color: var(--text); }
+  .modal-patient-tag {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    background: var(--accent-lt);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .modal-body { padding: 1.5rem 1.25rem 0.75rem; }
+  .rdv-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1rem;
+  }
+  .rdv-label { font-size: 14px; color: var(--text-mid); min-width: 140px; }
+  .rdv-select {
+    flex: 1;
+    height: 40px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--white);
+    padding: 0 32px 0 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.18s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237878A0' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  .rdv-select:focus { border-color: var(--accent); }
+  .modal-footer {
+    padding: 0.75rem 1.25rem 1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+{% endblock %}
+
+{% block body %}
+
+<div class="card">
+
+  {# ── ÉTAPE 1 : barre de recherche ── #}
+  <div class="page-title">Nouveau rendez-vous — Recherche patient</div>
+
+  <div class="search-section">
+    <form method="GET" action="{{ path('rendez_vous_new') }}" class="search-row">
+      <input
+        type="text"
+        name="q"
+        value="{{ query }}"
+        class="search-input"
+        placeholder="Nom ou prénom du patient…"
+        autocomplete="off"
+        autofocus
+      />
+      <button type="submit" class="btn btn-primary">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        Rechercher
+      </button>
+    </form>
+  </div>
+
+  {# ── ÉTAPE 2 : résultats ── #}
+  {% if searched %}
+
+    {% if patients is not empty %}
+
+      <div class="results-section">
+        <div class="results-header">
+          <strong>{{ patients|length }}</strong> patient{{ patients|length > 1 ? 's' : '' }} trouvé{{ patients|length > 1 ? 's' : '' }}
+          pour &laquo;&nbsp;{{ query }}&nbsp;&raquo;
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Sexe</th>
+              <th>Principale pathologie</th>
+              <th>Stade</th>
+              <th>Âge</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for patient in patients %}
+              <tr
+                data-patient-id="{{ patient.id }}"
+                data-patient-label="{{ patient.civilite }} {{ patient.nomComplet }}"
+                onclick="openModal(this)"
+                title="Créer un RDV pour {{ patient.nomComplet }}"
+              >
+                <td>{{ patient.nomComplet }}</td>
+                <td>
+                  <span class="badge {{ patient.sexe == 'F' ? 'badge-f' : 'badge-m' }}">
+                    {{ patient.sexe }}
+                  </span>
+                </td>
+                <td>{{ patient.principalePathologie ?? '—' }}</td>
+                <td>
+                  {% if patient.stade is not null %}
+                    <span class="stade-bubble">{{ patient.stade }}</span>
+                  {% else %}
+                    <span class="stade-none">—</span>
+                  {% endif %}
+                </td>
+                <td>{{ patient.age }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+    {% else %}
+
+      {# ── Alternative : aucun résultat ── #}
+      <div class="empty-state">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" style="margin:0 auto 12px; display:block;">
+          <circle cx="11" cy="11" r="8" stroke="#B8BDD8" stroke-width="1.5"/>
+          <path d="M21 21l-4.35-4.35" stroke="#B8BDD8" stroke-width="1.5" stroke-linecap="round"/>
+          <line x1="8" y1="11" x2="14" y2="11" stroke="#B8BDD8" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <strong>Aucun résultat</strong>
+        <p>Aucun patient ne correspond à &laquo;&nbsp;{{ query }}&nbsp;&raquo;.<br>Vérifiez l'orthographe ou essayez un autre nom.</p>
+      </div>
+
+    {% endif %}
+
+  {% endif %}
+
+</div>{# /.card #}
+
+
+{# ── ÉTAPE 3 : Modale de création du RDV ── #}
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlayClick(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+
+    <div class="modal-header">
+      <h2 id="modalTitle">Nouveau Rendez-Vous</h2>
+      <span class="modal-patient-tag" id="modalPatientTag">—</span>
+    </div>
+
+    <form
+      id="rdvForm"
+      method="POST"
+      action="{{ path('rendez_vous_create') }}"
+      class="modal-body"
+    >
+      {# Token CSRF #}
+      <input type="hidden" name="_token" value="{{ csrf_token('rdv_create') }}" />
+      {# ID patient (rempli par JS) #}
+      <input type="hidden" name="patient_id" id="hiddenPatientId" />
+      {# Terme de recherche pour redirection en cas d'erreur #}
+      <input type="hidden" name="q" value="{{ query }}" />
+
+      <div class="rdv-row">
+        <label class="rdv-label" for="rdvDate">Aura rendez-vous le</label>
+        <select class="rdv-select" name="date" id="rdvDate" required>
+          <option value="">— Date —</option>
+        </select>
+      </div>
+
+      <div class="rdv-row">
+        <label class="rdv-label" for="rdvHeure">à</label>
+        <select class="rdv-select" name="heure" id="rdvHeure" required>
+          <option value="">— Heure —</option>
+          {% set heures = ['08:00','08:30','09:00','09:30','10:00','10:30',
+                           '11:00','11:30','14:00','14:30','15:00','15:30',
+                           '16:00','16:30','17:00'] %}
+          {% for h in heures %}
+            <option value="{{ h }}">{{ h }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="modal-footer" style="padding:0.75rem 0 0.25rem;">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Annuler</button>
+        <button type="submit" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+          Créer
+        </button>
+      </div>
+
+    </form>
+  </div>
+</div>
+
+{% endblock %}
+
+
+{% block javascripts %}
+<script>
+  // ── Génère les 30 prochains jours ouvrés au format Y-m-d / libellé FR ──
+  (function buildDateOptions() {
+    const select = document.getElementById('rdvDate');
+    const joursFR = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    const moisFR  = ['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+    let added = 0;
+    let d = new Date();
+    d.setDate(d.getDate() + 1);
+
+    while (added < 30) {
+      const day = d.getDay();
+      if (day !== 0 && day !== 6) {
+        // Valeur soumise au serveur : Y-m-d
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, '0');
+        const dd   = String(d.getDate()).padStart(2, '0');
+        const value = `${yyyy}-${mm}-${dd}`;
+
+        // Libellé affiché : "Lun 25 mar 2025"
+        const label = `${joursFR[day]} ${d.getDate()} ${moisFR[d.getMonth()]} ${yyyy}`;
+
+        const opt = document.createElement('option');
+        opt.value = value;
+        opt.textContent = label;
+        select.appendChild(opt);
+        added++;
+      }
+      d.setDate(d.getDate() + 1);
+    }
+  })();
+
+  // ── Ouvrir la modale avec les données du patient cliqué ──
+  function openModal(row) {
+    document.getElementById('hiddenPatientId').value = row.dataset.patientId;
+    document.getElementById('modalPatientTag').textContent  = row.dataset.patientLabel;
+    document.getElementById('rdvDate').value  = '';
+    document.getElementById('rdvHeure').value = '';
+    document.getElementById('modalOverlay').classList.add('open');
+  }
+
+  // ── Fermer la modale ──
+  function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+
+  // ── Clic sur le fond de l'overlay = fermer ──
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('modalOverlay')) {
+      closeModal();
+    }
+  }
+
+  // ── Touche Échap = fermer ──
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des rendez-vous{% endblock %}
+
+{% block extra_styles %}
+  .header-row {
+    padding: 1.25rem 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1.5px solid var(--border);
+  }
+  .header-row h1 { font-size: 16px; font-weight: 600; color: var(--text); }
+
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--surface2); border-bottom: 1.5px solid var(--border); }
+  thead th {
+    padding: 9px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    text-align: left;
+  }
+  tbody tr { background: var(--white); border-bottom: 1px solid #EAEAF5; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody td { padding: 12px 16px; font-size: 14px; color: var(--text-mid); }
+  tbody td:first-child { font-weight: 500; color: var(--text); }
+
+  .statut-badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--accent-lt);
+    color: var(--accent);
+  }
+  .empty-index {
+    padding: 3rem;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+{% endblock %}
+
+{% block body %}
+<div class="card">
+  <div class="header-row">
+    <h1>Rendez-vous planifiés</h1>
+    <a href="{{ path('rendez_vous_new') }}" class="btn btn-primary">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Nouveau RDV
+    </a>
+  </div>
+
+  {% if rendez_vous_list is not empty %}
+    <table>
+      <thead>
+        <tr>
+          <th>Patient</th>
+          <th>Date</th>
+          <th>Heure</th>
+          <th>Statut</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rdv in rendez_vous_list %}
+          <tr>
+            <td>{{ rdv.patient.civilite }} {{ rdv.patient.nomComplet }}</td>
+            <td>{{ rdv.date|date('d/m/Y') }}</td>
+            <td>{{ rdv.heure|date('H:i') }}</td>
+            <td><span class="statut-badge">{{ rdv.statut }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-index">
+      Aucun rendez-vous planifié pour le moment.<br>
+      <a href="{{ path('rendez_vous_new') }}" style="color:var(--accent); font-weight:500;">Créer le premier RDV</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
